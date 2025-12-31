@@ -30,9 +30,9 @@ def explore_dataset(csv_path):
     
     # Shape
     print(f"\n2. Dataset Shape:")
-    print(f"   Total rows: {df.shape:,} (including header)")
-    print(f"   Data rows: {df.shape-1:,}")
-    print(f"   Total columns: {df.shape}")
+    print(f"   Total rows: {df.shape[0]:,} (including header)")
+    print(f"   Data rows: {df.shape[0]-1:,}")
+    print(f"   Total columns: {df.shape[1]}")
     
     # Columns
     print(f"\n3. Column Structure:")
