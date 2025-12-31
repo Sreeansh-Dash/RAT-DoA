@@ -71,7 +71,9 @@ def main():
     
     # ===== Create Model =====
     print("\n7. Creating RAT-DoA model...")
-    model = RAT_DoA(input_dim=479)
+    input_dim = X_train.shape[1]
+    model = RAT_DoA(input_dim=input_dim)
+    print(f"   Input dim: {input_dim}")
     print(f"   Parameters: {count_parameters(model):,}")
     
     # ===== Train =====

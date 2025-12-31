@@ -40,8 +40,8 @@ class RAT_DoA(nn.Module):
         
         # ===== ResNet Backbone =====
         self.resnet_blocks = nn.Sequential(
-            ResNetBlock(embedding_dim, resnet_dims, dropout),
-            ResNetBlock(resnet_dims, resnet_dims, dropout),
+            ResNetBlock(embedding_dim, resnet_dims[0], dropout),
+            ResNetBlock(resnet_dims[0], resnet_dims[1], dropout),
         )
         
         final_dim = resnet_dims[-1]  # 1024

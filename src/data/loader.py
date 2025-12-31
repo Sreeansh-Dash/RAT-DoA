@@ -20,12 +20,15 @@ class EEGDataLoader:
         print("⚠️  This is a large file (~500MB+). Please wait...")
         
         try:
-            # Load only numeric data to save memory
-            self.df = pd.read_csv(self.csv_path, dtype=np.float32)
+            # Load data, handle mixed types
+            self.df = pd.read_csv(self.csv_path)
+            # Convert to float32, drop non-numeric columns if any
+            numeric_cols = self.df.select_dtypes(include=[np.number]).columns
+            self.df = self.df[numeric_cols].astype(np.float32)
             print(f"✓ Loaded successfully!")
             print(f"  Shape: {self.df.shape}")
-            print(f"  Samples: {self.df.shape}")
-            print(f"  Features: {self.df.shape}")
+            print(f"  Samples: {self.df.shape[0]}")
+            print(f"  Features: {self.df.shape[1]}")
             return self.df
         except MemoryError:
             print("❌ File too large for memory!")

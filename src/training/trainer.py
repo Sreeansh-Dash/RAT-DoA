@@ -1,5 +1,3 @@
-
-trainer.py
 """
 RAT-DoA Model Trainer
 Complete training loop with validation, early stopping, and checkpointing
@@ -57,7 +55,6 @@ class RAT_Trainer:
             mode='min',
             factor=0.5,
             patience=5,
-            verbose=True,
             min_lr=1e-6
         )
         
