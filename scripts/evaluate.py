@@ -63,7 +63,8 @@ def main():
     # ===== Load Model =====
     print("\n6. Loading trained model...")
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model = RAT_DoA(input_dim=479)
+    input_dim = X_test.shape[1]
+    model = RAT_DoA(input_dim=input_dim)
     
     # Load best model weights
     model_path = Path('results/models/best_model.pt')

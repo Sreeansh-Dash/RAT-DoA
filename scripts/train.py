@@ -82,7 +82,7 @@ def main():
     print(f"   Device: {device}")
     
     trainer = RAT_Trainer(model, device=device)
-    history = trainer.train(train_loader, val_loader, epochs=50, patience=15)  # Reduced epochs
+    history = trainer.train(train_loader, val_loader, epochs=50, patience=25)  # Reduced epochs
     
     # ===== Test =====
     print("\n9. Testing...")
