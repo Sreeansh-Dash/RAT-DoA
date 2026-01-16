@@ -63,18 +63,67 @@ def main():
     # ===== Load Model =====
     print("\n6. Loading trained model...")
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    input_dim = X_test.shape[1]
-    model = RAT_DoA(input_dim=input_dim)
-    
-    # Load best model weights
     model_path = Path('results/models/best_model.pt')
+
+    model = None
     if model_path.exists():
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        print(f"   ✓ Loaded from {model_path}")
+        # Load checkpoint to CPU and try to infer model architecture
+        ckpt = torch.load(model_path, map_location='cpu')
+        try:
+            # If checkpoint is a dict with 'state_dict' key, extract it
+            state_dict = ckpt.get('state_dict', ckpt) if isinstance(ckpt, dict) else ckpt
+        except Exception:
+            state_dict = ckpt
+
+        inferred = {}
+        # Try to infer input and embedding dims from feature_embedding weights
+        if isinstance(state_dict, dict) and 'feature_embedding.0.weight' in state_dict:
+            w0 = state_dict['feature_embedding.0.weight']
+            # w0 shape: (embedding_dim*2, input_dim)
+            inferred['input_dim'] = int(w0.shape[1])
+            inferred['embedding_dim'] = int(w0.shape[0] // 2)
+
+        # Try to infer resnet dims
+        if isinstance(state_dict, dict) and 'resnet_blocks.0.linear1.weight' in state_dict:
+            r0 = state_dict['resnet_blocks.0.linear1.weight']
+            inferred['resnet_0'] = int(r0.shape[0])
+        if isinstance(state_dict, dict) and 'resnet_blocks.1.linear1.weight' in state_dict:
+            r1 = state_dict['resnet_blocks.1.linear1.weight']
+            inferred['resnet_1'] = int(r1.shape[0])
+
+        # Build model using inferred values when possible, else fall back to dataset shape
+        try:
+            if 'input_dim' in inferred and 'embedding_dim' in inferred:
+                kwargs = {
+                    'input_dim': inferred['input_dim'],
+                    'embedding_dim': inferred['embedding_dim']
+                }
+                if 'resnet_0' in inferred and 'resnet_1' in inferred:
+                    kwargs['resnet_dims'] = [inferred['resnet_0'], inferred['resnet_1']]
+                model = RAT_DoA(**kwargs)
+                print(f"   ✓ Inferred model from checkpoint: input_dim={kwargs['input_dim']}, embedding_dim={kwargs['embedding_dim']}, resnet_dims={kwargs.get('resnet_dims')}")
+            else:
+                # fallback
+                model = RAT_DoA(input_dim=X_test.shape[1])
+                print(f"   ⚠️  Could not fully infer architecture; using input_dim={X_test.shape[1]}")
+        except Exception as e:
+            print(f"   ⚠️  Failed to construct inferred model: {e}")
+            model = RAT_DoA(input_dim=X_test.shape[1])
+
+        # Attempt strict load first, then non-strict partial load
+        try:
+            model.load_state_dict(state_dict)
+            print(f"   ✓ Loaded full state dict from {model_path}")
+        except RuntimeError as e:
+            print(f"   ⚠️  Full load failed: {e}")
+            print("   Attempting partial (non-strict) load and skipping mismatched layers...")
+            model.load_state_dict(state_dict, strict=False)
+            print(f"   ✓ Partially loaded state dict from {model_path}")
     else:
         print(f"   ⚠️  Warning: {model_path} not found!")
         print(f"   Using untrained model for demonstration")
-    
+        model = RAT_DoA(input_dim=X_test.shape[1])
+
     model = model.to(device)
     print(f"   Device: {device}")
     print(f"   Parameters: {count_parameters(model):,}")
